@@ -52,19 +52,43 @@ export const getServiceDataController = async (req: Request, res: Response) => {
         const service = await getServiceData(req.params.serviceId);
         // integrationType -> sheets -> sheetData-> sheetsData // 1st method --> populate(service) by taking integrationType in Request --> 2nd method
         if (!service) throw new Error("Service not found");
+
+        // handle sheets intigration details
         if (service.integrationType === "sheets") {
             const sheetData = await getSpreadsheetDataFromServiceId(
                 service._id,
             );
+
             if (!sheetData) throw new Error("Sheet not found");
+
+            let sheetGuild = undefined;
+
+            const guilds = await getGuilds(req.customer.accessToken);
+            if (!guilds) throw new Error("Error fetching guilds");
+
+            // find guild of the service
+            for (const guild of guilds) {
+                if (guild.id === sheetData.guildId) {
+                    sheetGuild = guild;
+                    break;
+                }
+            }
+
+            if (!sheetGuild) {
+                throw new Error("Can not find associated guild");
+            }
+
             return res.send({
                 data: {
                     sheet: sheetData,
+                    guild: sheetGuild,
                 },
                 message: "Service fetched successfully",
                 success: true,
             });
         }
+
+        // handle tagmango service
         if (service.integrationType === "tagMango") {
             return res.send({
                 message: "TagMango integration is not supported yet",
