@@ -59,7 +59,6 @@ export const getServiceDataController = async (req: Request, res: Response) => {
             if (!sheetData) throw new Error("Sheet not found");
             return res.send({
                 data: {
-                    service: service,
                     sheet: sheetData,
                 },
                 message: "Service fetched successfully",
