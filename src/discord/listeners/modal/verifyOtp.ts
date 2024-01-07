@@ -1,6 +1,10 @@
 import { GuildMemberRoleManager, ModalSubmitInteraction } from "discord.js";
-import { updateDiscordIdForPhoneNumberandFetchRoles } from "../../../services/service.service";
+import {
+    fetchRoles,
+    updateDiscordIdForPhoneNumberandFetchRoles,
+} from "../../../services/service.service";
 import { verifyOtpForDiscordId } from "../../../utils/otp.utils";
+import customSolution from "../../../customSolutions/gangstaPhilosophy";
 
 export default async (
     interaction: ModalSubmitInteraction,
@@ -20,16 +24,22 @@ export default async (
             });
             return;
         }
+
         await interaction.editReply({
             content: "OTP validated , assigning roles ...",
         });
-
-        const roles = await updateDiscordIdForPhoneNumberandFetchRoles(
-            serviceId,
-            phone,
-            interaction.user.id,
-        );
-        if (!roles) {
+        let roles = [];
+        if (validOtp.userId) {
+            customSolution.linkDiscord(validOtp.userId, interaction.user.id);
+            roles = (await fetchRoles(serviceId)) || [];
+        } else {
+            roles = await updateDiscordIdForPhoneNumberandFetchRoles(
+                serviceId,
+                phone,
+                interaction.user.id,
+            );
+        }
+        if (!roles || roles.length === 0) {
             await interaction.editReply({
                 content: "No roles found for this service.",
             });

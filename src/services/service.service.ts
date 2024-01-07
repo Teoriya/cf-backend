@@ -187,3 +187,7 @@ export const updateDiscordIdForPhoneNumberandFetchRoles = async (
     );
     return spreadsheet.service.roles;
 };
+
+export const fetchRoles = async (serviceId: string) => {
+    return (await serviceModel.findById(serviceId).exec())?.roles;
+};

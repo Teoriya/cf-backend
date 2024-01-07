@@ -20,13 +20,12 @@ export default async (
         const service = await getServiceData(serviceId);
         const phone = interaction.fields.getTextInputValue("phone");
         if (service?.integrationType === "tagMango") {
-            const tmCheck = await gangstaPhilosophy.subscriberValidator(
+            const userId = await gangstaPhilosophy.subscriberValidator(
                 serviceId,
-                +phone,
-                interaction.user.id,
+                +phone
             );
-            if (tmCheck) {
-                const otp = generateOtpForDiscordId(interaction.user.id);
+            if (userId) {
+                const otp = generateOtpForDiscordId(interaction.user.id, userId);
                 await sendOtp(parseInt(phone), otp);
 
                 const verifyButton = new ButtonBuilder()

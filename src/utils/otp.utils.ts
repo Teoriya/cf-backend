@@ -3,7 +3,12 @@ import axios from "axios";
 import { Collection } from "discord.js";
 import { Fast2SMS_API_KEY, OTP_EXPIRY_TIME, OTP_SECRET } from "../config";
 
-const otpCollection = new Collection<string, number>();
+interface OtpData {
+    otp: number;
+    userId?: string;
+}
+
+const otpCollection = new Collection<string, OtpData>();
 
 /**
  * @returns a 6 digit OTP
@@ -14,11 +19,11 @@ export const generateOtp = () => {
     return otp;
 };
 
-export const generateOtpForDiscordId = (discordId: string) => {
+export const generateOtpForDiscordId = (discordId: string, userId?: string) => {
     const existing = otpCollection.get(discordId);
     if (existing) return existing;
     const otp = generateOtp();
-    otpCollection.set(discordId, otp);
+    otpCollection.set(discordId, { otp, userId } as OtpData);
     setTimeout(() => {
         otpCollection.delete(discordId);
     }, OTP_EXPIRY_TIME);
@@ -27,8 +32,8 @@ export const generateOtpForDiscordId = (discordId: string) => {
 
 export const verifyOtpForDiscordId = (discordId: string, otp: number) => {
     const existing = otpCollection.get(discordId);
-    if (existing === otp) otpCollection.delete(discordId);
-    return existing === otp;
+    if (existing?.otp === otp) otpCollection.delete(discordId);
+    return existing;
 };
 
 /**
