@@ -1,5 +1,8 @@
 import axios from "axios";
-import { createCredential, getCredential } from "./models/tmCredential.model";
+import {
+    createCredential,
+    getCredential,
+} from "./services/tmCredential.service";
 
 export const getOtp = async (
     data: { phone: number; userAgent: string },
@@ -32,6 +35,7 @@ export const verifyOtp = async (
     },
     customerId: string,
     domain: string,
+    serviceId: string,
 ) => {
     const config = {
         method: "post",
@@ -43,7 +47,7 @@ export const verifyOtp = async (
         },
         data: {
             ...data,
-            logoutAll: true,
+            // logoutAll: true,
         },
     };
     const response = await axios(config);
@@ -57,6 +61,7 @@ export const verifyOtp = async (
         refreshToken: result.refreshToken,
         phone: data.phone,
         domain,
+        serviceId,
     });
     if (!credential.acknowledged) {
         throw new Error("Error in creating credential");
@@ -64,17 +69,16 @@ export const verifyOtp = async (
     return true;
 };
 
-export const getAccessToken = async (customerId: string) => {
-    const credential = await getCredential(customerId);
+export const getAccessToken = async (serviceId: string) => {
+    const credential = await getCredential(serviceId);
     if (!credential) throw new Error("Credential not found");
 
-    // If token is valid for more than 80 minutes, return it
+    // If token updated in less than 80 minutes, return it
     // if (credential.updatedAt.getTime() + 80 * 60 * 1000 > Date.now())
     //     return {
     //         accessToken: credential.accessToken,
     //         domain: credential.domain,
     //     };
-
     const { refreshToken } = credential;
     const config = {
         method: "post",
@@ -94,11 +98,11 @@ export const getAccessToken = async (customerId: string) => {
         throw new Error("Error in getting access token");
 
     const data = await createCredential({
-        customerId,
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         phone: credential.phone,
         domain: credential.domain,
+        serviceId,
     });
     if (!data.acknowledged)
         throw new Error("Error in updating credential with new token");
@@ -112,9 +116,9 @@ export const getAccessToken = async (customerId: string) => {
 export const getSubscribers = async ({
     page = 1,
     type = "all",
-    pageSize = 25,
+    pageSize,
     mangoes,
-    customerId,
+    serviceId,
     term,
     startDate,
     endDate,
@@ -123,12 +127,12 @@ export const getSubscribers = async ({
     type?: "all" | "active" | "inactive" | "revoked";
     pageSize?: number;
     mangoes: string;
-    customerId: string;
+    serviceId: string;
     term?: string | number;
     startDate?: string;
     endDate?: string;
 }) => {
-    const credential = await getAccessToken(customerId);
+    const credential = await getAccessToken(serviceId);
     const config = {
         method: "get",
         maxBodyLength: Infinity,
@@ -137,7 +141,7 @@ export const getSubscribers = async ({
             "x-whitelabel-host": credential.domain,
             "Content-Type": "application/json",
             authorization: `Bearer ${credential.accessToken}`,
-            "x-whitelabel-creator": await getHostDetails(customerId),
+            "x-whitelabel-creator": await getHostDetails(serviceId),
         },
         params: {
             page,
@@ -147,7 +151,7 @@ export const getSubscribers = async ({
             term,
             startDate,
             endDate,
-            spreadSubscribers: true,
+            // spreadSubscribers: true,
         },
     };
     const response = await axios(config);
@@ -159,15 +163,15 @@ export const getSubscribers = async ({
     throw result;
 };
 
-export const getAllActiveMangoes = async (customerId: string) => {
-    const credential = await getAccessToken(customerId);
+export const getAllActiveMangoes = async (serviceId: string) => {
+    const credential = await getAccessToken(serviceId);
     const config = {
         method: "get",
         maxBodyLength: Infinity,
         url: "https://api-prod-new.tagmango.com/get-all-active-mangoes",
         headers: {
             "x-whitelabel-host": credential.domain,
-            "x-whitelabel-creator": await getHostDetails(customerId),
+            "x-whitelabel-creator": await getHostDetails(serviceId),
             authorization: `Bearer ${credential.accessToken}`,
         },
     };
@@ -180,8 +184,8 @@ export const getAllActiveMangoes = async (customerId: string) => {
     throw result;
 };
 
-export const getHostDetails = async (customerId: string) => {
-    const credential = await getAccessToken(customerId);
+export const getHostDetails = async (serviceId: string) => {
+    const credential = await getAccessToken(serviceId);
     const config = {
         method: "get",
         maxBodyLength: Infinity,

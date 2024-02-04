@@ -11,7 +11,6 @@ export type TmMapperDocument = mongoose.Document & {
         TmCredentialDocument & mongoose.Document
     >;
     customer: mongoose.PopulatedDoc<CustomerDocument & mongoose.Document>;
-    xWhiteLabelHost: string;
     metadata: object;
     customIntegrationId: string;
 };
@@ -39,52 +38,3 @@ const TmMapperSchema = new mongoose.Schema(
 );
 const model = mongoose.model<TmMapperDocument>("tmMapper", TmMapperSchema);
 export default model;
-
-export const createMapper = async ({
-    mango,
-    serviceId,
-    tmCredentialId,
-    customerId,
-    metadata,
-    customIntegrationId,
-}: {
-    mango: string;
-    serviceId: string;
-    tmCredentialId: string;
-    customerId: string;
-    metadata: object;
-    customIntegrationId: string;
-}) => {
-    const mapper = await model.create({
-        mango,
-        service: serviceId,
-        tmCredential: tmCredentialId,
-        customer: customerId,
-        metadata,
-        customIntegrationId,
-    });
-    return mapper;
-};
-
-export const getMapper = async (
-    {
-        mango,
-        serviceId,
-        customerId,
-    }: {
-        mango?: string;
-        serviceId?: string;
-        customerId?: string;
-    },
-    populated = true,
-) => {
-    const mapper = await model
-        .findOne({
-            mango,
-            service: serviceId,
-            customer: customerId,
-        })
-        .populate(populated ? ["service", "tmCredential", "customer"] : [])
-        .exec();
-    return mapper;
-};

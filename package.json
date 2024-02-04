@@ -16,6 +16,7 @@
 		"@types/jsonwebtoken": "^9.0.4",
 		"@types/mongoose": "^5.11.97",
 		"@types/node": "^20.8.7",
+		"@types/node-cron": "^3.0.11",
 		"@typescript-eslint/eslint-plugin": "^6.14.0",
 		"@typescript-eslint/parser": "^6.14.0",
 		"eslint": "^8.56.0",
@@ -43,6 +44,7 @@
 		"googleapis": "^128.0.0",
 		"jsonwebtoken": "^9.0.2",
 		"mongoose": "^7.6.3",
+		"node-cron": "^3.0.3",
 		"zod": "^3.22.4",
 		"zod-express-middleware": "^1.4.0"
 	}

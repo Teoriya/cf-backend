@@ -34,9 +34,13 @@ export const getServicesController = ApiHandler(
         const services = await getServicesOfDiscordGuilds(guildIds);
         const servicesWithGuilds = services.map((service) => {
             const guild = guilds.find((guild) => guild.id === service.guildId);
+            if (!guild) throw new Error("Guild not found");
             return {
                 ...service,
-                guild:{...guild,icon:`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp`},
+                guild: {
+                    ...guild,
+                    icon: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp`,
+                },
             };
         });
         return res.send({

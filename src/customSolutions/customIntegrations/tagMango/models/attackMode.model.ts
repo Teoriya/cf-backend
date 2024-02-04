@@ -9,6 +9,8 @@ export type TmSubscriberDocument = mongoose.Document & {
     country: string;
     linkedDiscord: boolean;
     discordLinkTimestamp: Date;
+    updatedAt: Date;
+    createdAt: Date;
 };
 
 const TmSubscriberSchema = new mongoose.Schema(

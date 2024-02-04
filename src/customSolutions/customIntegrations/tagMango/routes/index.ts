@@ -1,8 +1,8 @@
 import serviceModel from "@/models/mongoDB/service.model";
 import { Router } from "express";
 import { getAllActiveMangoes, getOtp, verifyOtp } from "../apiWrapper";
-import { getCredential } from "../models/tmCredential.model";
-import { createMapper } from "../models/tmMapper.model";
+import { getCredential } from "../services/tmCredential.service";
+import { createMapper } from "../services/tmMapper.service";
 const router = Router();
 
 // Get OTP
@@ -37,13 +37,18 @@ router.post("/getOtp", async (req, res) => {
 // Verify OTP
 router.post("/verifyOtp", async (req, res) => {
     try {
-        const { phone, otp, domain } = req.body;
+        const { phone, otp, domain, serviceId } = req.body;
         const data = {
             phone,
             otp,
             userAgent: req.headers["user-agent"] || "",
         };
-        const verified = await verifyOtp(data, req.customer.id, domain);
+        const verified = await verifyOtp(
+            data,
+            req.customer.id,
+            domain,
+            serviceId,
+        );
         if (verified) {
             res.status(200).send({
                 message: "OTP verified successfully",
@@ -64,9 +69,12 @@ router.post("/verifyOtp", async (req, res) => {
 
 router.get("/mangoes", async (req, res) => {
     try {
-        const credential = await getCredential(req.customer.id);
+        if (!req.query.serviceId) throw new Error("ServiceId not found");
+        const credential = await getCredential(req.query.serviceId as string);
         if (!credential) throw new Error("Credential not found");
-        const mangoes = await getAllActiveMangoes(req.customer.id);
+        const mangoes = await getAllActiveMangoes(
+            req.query.serviceId as string,
+        );
         if (!mangoes) throw new Error("No mangoes found");
 
         const data = mangoes.map((mango: any) => {
@@ -99,7 +107,7 @@ router.post("/addCustomSolution", async (req, res) => {
         const service = await serviceModel.findById(serviceId).exec();
         if (!service) throw new Error("Service not found");
 
-        const mangoes = await getAllActiveMangoes(req.customer.id);
+        const mangoes = await getAllActiveMangoes(serviceId);
         if (!mangoes.find((m: any) => m._id === mango))
             throw new Error("Mango not found in TagMango");
 
@@ -107,14 +115,16 @@ router.post("/addCustomSolution", async (req, res) => {
             mango,
             serviceId,
             customerId: req.customer.id,
-            tmCredentialId: (await getCredential(req.customer.id))?._id,
+            tmCredentialId: (await getCredential(serviceId))?._id,
             metadata: {},
             customIntegrationId: service.customIntegrationId,
         });
-        res.status(200).send({
+        if (!mapper) throw new Error("Error in creating mapper");
+
+        return res.status(200).send({
             message: "Custom TagMango Service created successfully",
         });
-    } catch (error) {
+    } catch (error: any) {
         if (error.name === "MongoServerError") {
             if (error.code === 11000) {
                 return res.status(400).send({

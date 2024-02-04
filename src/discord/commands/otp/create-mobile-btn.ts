@@ -42,7 +42,6 @@ export default {
             .setLabel("Authenticate with Phone")
             .setStyle(ButtonStyle.Secondary);
 
-
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             phoneButton,
         );
